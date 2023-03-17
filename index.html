@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Exo|Red+Hat+Display">
+        <title>
+            Assignment 3: Visualizations of 3-room HDB Resale Price Changes Across Time
+        </title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Exo|Red+Hat+Display">
+        <!-- <script src="https://d3js.org/d3.v7.min.js"></script> -->
+        <style>
+            div.tooltip {	
+			padding: 2px;				
+			font: 14px;	
+			/* background: white;	 */
+			border: 0px;		
+			border-radius: 8px;			
+			pointer-events: none;	
+		}
+        </style>
+    </head>
+    <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;background-color: rgb(247, 247, 209);color: #403f42;;" id="body"">
+        <h1>
+            Assignment 3: Visualizations of 3-room HDB Resale Price Changes Across Time
+        </h1>
+        <h3>
+            This visualization aims to explore:
+        </h3>
+        <ul>
+            1. How the resale price of 3-room HDB changes in Singapore across time;
+        </ul>
+        <ul>
+            2. How the resale price of 3-room HDB changes in different regions;
+        </ul>
+	    <script src="https://d3js.org/d3.v4.js"></script>
+        <div id="plot" style="width:600px;height:400px;"></div>
+        
+        <script>
+
+            let url_file_2017 = "https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=3 ROOM&limit=200";
+            let url_file_2015 = "https://data.gov.sg/api/action/datastore_search?resource_id=1b702208-44bf-4829-b620-4615ee19b57c&q=3 ROOM&limit=200";
+            let url_file_2012 = "https://data.gov.sg/api/action/datastore_search?resource_id=83b2fc37-ce8c-4df4-968b-370fd818138b&q=3 ROOM&limit=200";
+            let url_file_2000 = "https://data.gov.sg/api/action/datastore_search?resource_id=8c00bf08-9124-479e-aeca-7cc411d884c4&q=3 ROOM&limit=200";
+            let url_file_1990 = "https://data.gov.sg/api/action/datastore_search?resource_id=adbbddd3-30e2-445f-a123-29bee150a6fe&q=3 ROOM&limit=200";
+
+
+            var margin = {top: 50, right: 150, bottom: 50, left: 80},
+                width = 1200 - margin.left - margin.right,
+                height = 600 - margin.top - margin.bottom;
+
+            // const col_name_x = 'remaining_lease'
+            // const col_name_x_new = 'months_left'
+            // const label_x = 'Remaining lease period (years)'
+            const col_name_x = 'month'
+            const col_name_x_new = 'year_of_resale'
+            const label_x = 'Time'
+            
+            
+            const col_name_y = 'resale_price'
+            const col_name_y_denominator = 'floor_area_sqm'
+            const col_name_y_new = 'resale_price_per_sqm'
+            const label_y = 'Resale Price per square meter ($/sqm)'
+
+            const col_name_group = 'town' //'storey_range' //'flat_type' //'flat_model'
+
+            const dot_size = 5
+
+            var svg = d3.select("#plot")
+                        .append("svg")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                            .attr("transform",
+                                    "translate(" + margin.left + "," + margin.top + ")");
+            
+            d3.json(url_file_1990, function(error, data_1990) {
+                d3.json(url_file_2000, function(error, data_2000){
+                    d3.json(url_file_2012, function(error, data_2012){
+                        d3.json(url_file_2015, function(error, data_2015){
+                            d3.json(url_file_2017, function(error, data_2017){
+                                data_1990= data_1990['result']['records']
+                                data_2000= data_2000['result']['records']
+                                data_2012= data_2012['result']['records']
+                                data_2015= data_2015['result']['records']
+                                data_2017= data_2017['result']['records']
+                                console.log(111)
+                                console.log(data_2017)
+
+                                towns_1990 = d3.set(data_1990, function(d) {return d[col_name_group]}).values().sort();
+                                // console.log(towns_1990)
+                                towns_2000 = d3.set(data_2000, function(d) {return d[col_name_group]}).values().sort();
+                                // console.log(towns_2000)
+                                towns_2012 = d3.set(data_2012, function(d) {return d[col_name_group]}).values().sort();
+                                // console.log(towns_2012)
+                                towns_2015 = d3.set(data_2015, function(d) {return d[col_name_group]}).values().sort();
+                                // console.log(towns_2015)
+                                towns_2017 = d3.set(data_2017, function(d) {return d[col_name_group]}).values().sort();
+                                // console.log(towns_2017)
+                                const list_group = d3.set(towns_1990.concat(towns_1990, towns_2000, towns_2012, towns_2015, towns_2017)).values().sort();
+                                console.log(list_group)
+
+                                var data = []
+                                
+                                data_1990.forEach(function(d){
+                                    data.push(d)
+                                })
+                                data_2000.forEach(function(d){
+                                    data.push(d)
+                                })
+                                data_2012.forEach(function(d){
+                                    data.push(d)
+                                })
+                                data_2015.forEach(function(d){
+                                    data.push(d)
+                                })
+                                data_2017.forEach(function(d){
+                                    data.push(d)
+                                })
+                                console.log(data)
+
+                                data.forEach(function(d){
+                                    var temp = d[col_name_x].split("-")
+                                    d[col_name_x_new] = parseInt(temp[0])
+                                    d[col_name_y_new] = parseInt(d[col_name_y]) / parseInt(d[col_name_y_denominator]);
+                                })
+                                const list_x = d3.set(data, function(d) {return d['month']}).values().sort((a, b) => a - b);
+                                console.log(list_x)
+
+                                var x = d3.scaleLinear()
+                                    .domain([d3.min(data, function(d) { 
+                                                return d[col_name_x_new]; 
+                                                }) - 5,
+                                            d3.max(data, function(d) { 
+                                                return d[col_name_x_new]; 
+                                                }) + 5
+                                            ])
+                                        // .domain([1990, 2023])
+                                    .range([ 0, width ]);
+                                // console.log(x)
+
+                                svg.append("g")
+                                    .attr("transform", "translate(0," + height + ")")
+                                    .call(d3.axisBottom(x).tickSizeOuter(0)
+                                    // .tickFormat(d => parseInt(d/12) + "Y" + d%12 + "M")
+                                    );
+                                    
+
+                                // Add Y axis
+                                var y = d3.scaleLinear()
+                                    .domain([d3.min(data, function(d) { 
+                                                return d[col_name_y_new]; 
+                                                }) / 100 * 90, // Else start from 0
+                                            d3.max(data, function(d) { 
+                                                return d[col_name_y_new]; 
+                                                }) / 100 * 110
+                                            ])
+                                    .range([ height, 0]);
+
+                                svg.append("g")
+                                    .call(d3.axisLeft(y).tickSizeOuter(0))
+
+                                // Add X axis label:
+                                svg.append("text")
+                                    .attr("text-anchor", "end")
+                                    .attr("x", width)
+                                    .attr("y", height + margin.top - 10)
+                                    .text(label_x);
+
+                                // Add Y axis label:
+                                svg.append("text")
+                                    .attr("text-anchor", "end")
+                                    .attr("transform", "rotate(-90)")
+                                    .attr("y", -margin.left + 25)
+                                    .attr("x", -margin.top + 25)
+                                    .text(label_y);
+
+                                // Color scale
+                                var color = d3.scaleOrdinal()
+                                    .domain(list_x)
+                                    .range(d3.schemeCategory10); //["#deeeff","#c4e2ff","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#084594"]); //d3.schemeCategory10);
+
+                                const opacity = 0.6
+
+                                // Create a tooltip
+                                var Tooltip = d3.select("#plot")
+                                    .append("div")
+                                    .style("opacity", 0)
+                                    .attr("class", "tooltip")
+                                    
+
+                                // Functions that change the tooltip when user hovers / moves / leaves
+                                var mouseover = function(d) {
+                                    Tooltip
+                                        .style("opacity", 1)
+
+                                    d3.select(this)
+                                        .style("stroke", "black")
+                                        .style("opacity", 1)
+                                }
+
+                                var mousemove = function(d) {
+                                    Tooltip
+                                        .html(
+                                            "Town: <b>" + d['town'] + "</b><br>" 
+                                            + "Block: <b>" + d['block'] + "</b><br>" 
+                                            + "Street Name: <b>" + d['street_name'] + "</b><br>" 
+                                            + "Flat Type: <b>" + d['flat_type'] + "</b><br>" 
+                                            + "Flat Model: <b>" + d['flat_model'] + "</b><br>" 
+                                            + "Floor Area (Square Meter): <b>" + d['floor_area_sqm'] + "</b><br>"
+                                            + "Storey Range: <b>" + d['storey_range'] + "</b><br>" 
+                                            + "Lease Commence Date: <b>" + d['lease_commence_date'] + "</b><br>" 
+                                            // + "Lease Left: <b>" + d['remaining_lease'] + " (" + d['months_left'] + "months)</b><br>" 
+                                            + "Month of transaction: <b>" + d['month'] + "</b><br>"
+                                            + "Resale Price: <b>$" + d['resale_price'] + "</b><br>"
+                                            + "Resale Price per square meter: <b>$" + d['resale_price_per_sqm'].toFixed(0) + "</b><br>"  
+                                            
+                                        )
+                                    .style("left", (d3.mouse(this)[0]+70) + "px")
+                                    .style("top", (d3.mouse(this)[1]) + "px")
+                                    
+                                }
+                                
+                                var mouseleave = function(d) {
+                                    Tooltip
+                                        .style("opacity", 0)
+                                    d3.select(this)
+                                        .style("stroke", "none")
+                                        .style("opacity", opacity)
+                                        
+                                }
+
+                                // Add dots
+                                svg.append('g')
+                                    .selectAll("dot")
+                                    .data(data)
+                                    .enter()
+                                    .append("circle")
+                                        .attr("class", function (d) { return "dot " + d[col_name_group] } )
+                                        .attr("cx", function (d) { return x(d[col_name_x_new]); } )
+                                        .attr("cy", function (d) { return y(d[col_name_y_new]); } )
+                                        .attr("r", dot_size)
+                                    .style("fill", function (d) { return color(d[col_name_group]) } )
+                                    .style("opacity", opacity)
+                                    .on("mouseover", mouseover)
+                                    .on("mousemove", mousemove)
+                                    .on("mouseleave", mouseleave)
+
+
+                                // Add one dot in the legend for each name
+                                svg.selectAll("legend_dots")
+                                    .data(list_group)
+                                    .enter()
+                                    .append("circle")
+                                        .attr("cx", width+10)
+                                        .attr("cy", function(d,i){ return 100 + i*10}) // 100 is where the first dot appears. 25 is the distance between dots
+                                        .attr("r", dot_size)
+                                        .style("opacity", opacity)
+                                        .style("fill", function(d){ return color(d)})
+
+                                // Add one dot in the legend for each name
+                                svg.selectAll("legend_text")
+                                    .data(list_group)
+                                    .enter()
+                                    .append("text")
+                                        .attr("x", width+10+10)
+                                        .attr("y", function(d,i){ return 100 + i*10}) // 100 is where the first dot appears. 25 is the distance between dots
+                                        .style("fill", function(d){ return color(d)})
+                                        .style("font-size", 12)
+                                        .text(function(d){ return d})
+                                        .attr("text-anchor", "left")
+                                        .style("alignment-baseline", "middle")
+
+                                // ------------
+                            })
+                        })
+                    })
+                })
+            })
+
+            
+            
+        </script>
+    </body>
+    
+</html>

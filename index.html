@@ -15,7 +15,16 @@
 			border: 0px;		
 			border-radius: 8px;			
 			pointer-events: none;	
-		}
+		    }
+        svg {
+        font-family: "Helvetica Neue", Helvetica;
+        }
+
+        .line {
+        fill: none;
+        /* stroke: #000; */
+        stroke-width: 2px;
+        }
         </style>
     </head>
     <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;background-color: rgb(247, 247, 209);color: #403f42;;" id="body"">
@@ -31,6 +40,18 @@
         <ul>
             2. How the resale price of 3-room HDB changes in different regions;
         </ul>
+        <h3>
+            Findings:
+        </h3>
+        <ul>
+            1. The resale price of 3-room HDB in Singapore has increased considerably throughout the years.
+            Take the price in SERANGOON for example. In 1991, one of the resaled HDB was priced 906 SGD per m^2, while in 2023, the price per m^2 of a resaled HDB in the same town grows to 7734 SGD.
+
+        </ul>
+        <ul>
+            2. Resale prices in areas such as CENTRAL AREA and SERANGOON are higher, especially in recent years.
+            On the other hand, resale prices in YISHUN appear to be lower than average.
+        </ul>
 	    <script src="https://d3js.org/d3.v4.js"></script>
         <div id="plot" style="width:600px;height:400px;"></div>
         
@@ -38,9 +59,9 @@
 
             let url_file_2017 = "https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&q=3 ROOM&limit=200";
             let url_file_2015 = "https://data.gov.sg/api/action/datastore_search?resource_id=1b702208-44bf-4829-b620-4615ee19b57c&q=3 ROOM&limit=200";
-            let url_file_2012 = "https://data.gov.sg/api/action/datastore_search?resource_id=83b2fc37-ce8c-4df4-968b-370fd818138b&q=3 ROOM&limit=200";
-            let url_file_2000 = "https://data.gov.sg/api/action/datastore_search?resource_id=8c00bf08-9124-479e-aeca-7cc411d884c4&q=3 ROOM&limit=200";
-            let url_file_1990 = "https://data.gov.sg/api/action/datastore_search?resource_id=adbbddd3-30e2-445f-a123-29bee150a6fe&q=3 ROOM&limit=200";
+            let url_file_2012 = "https://data.gov.sg/api/action/datastore_search?resource_id=83b2fc37-ce8c-4df4-968b-370fd818138b&q=3 ROOM&limit=300";
+            let url_file_2000 = "https://data.gov.sg/api/action/datastore_search?resource_id=8c00bf08-9124-479e-aeca-7cc411d884c4&q=3 ROOM&limit=400";
+            let url_file_1990 = "https://data.gov.sg/api/action/datastore_search?resource_id=adbbddd3-30e2-445f-a123-29bee150a6fe&q=3 ROOM&limit=400";
 
 
             var margin = {top: 50, right: 150, bottom: 50, left: 80},
@@ -54,7 +75,7 @@
             const col_name_x_new = 'year_of_resale'
             const label_x = 'Time'
             
-            
+            const col_name_avg = 'resale_price_year_avg'
             const col_name_y = 'resale_price'
             const col_name_y_denominator = 'floor_area_sqm'
             const col_name_y_new = 'resale_price_per_sqm'
@@ -70,7 +91,7 @@
                             .attr("height", height + margin.top + margin.bottom)
                         .append("g")
                             .attr("transform",
-                                    "translate(" + margin.left + "," + margin.top + ")");
+                                    "translate(" + margin.left + "," + margin.top + ")")
             
             d3.json(url_file_1990, function(error, data_1990) {
                 d3.json(url_file_2000, function(error, data_2000){
@@ -82,8 +103,8 @@
                                 data_2012= data_2012['result']['records']
                                 data_2015= data_2015['result']['records']
                                 data_2017= data_2017['result']['records']
-                                console.log(111)
-                                console.log(data_2017)
+                                // console.log(111)
+                                // console.log(data_2017)
 
                                 towns_1990 = d3.set(data_1990, function(d) {return d[col_name_group]}).values().sort();
                                 // console.log(towns_1990)
@@ -96,7 +117,7 @@
                                 towns_2017 = d3.set(data_2017, function(d) {return d[col_name_group]}).values().sort();
                                 // console.log(towns_2017)
                                 const list_group = d3.set(towns_1990.concat(towns_1990, towns_2000, towns_2012, towns_2015, towns_2017)).values().sort();
-                                console.log(list_group)
+                                // console.log(list_group)
 
                                 var data = []
                                 
@@ -115,17 +136,75 @@
                                 data_2017.forEach(function(d){
                                     data.push(d)
                                 })
-                                console.log(data)
+                                // console.log(data)
 
+                                var avg_data_list = new Object()
+                                var avg_data = new Object()
+                                // console.log(list_group.length)
+                                for (let i = 0; i < list_group.length; i++){
+                                    avg_data_list[list_group[i]] = {}
+                                    avg_data[list_group[i]] = {}
+                                    for (let j = 1990; j < 2024; j++){
+                                        avg_data_list[list_group[i]][j] = []
+                                        avg_data[list_group[i]][j] = 0
+                                    }
+                                }
+                                // console.log(avg_data_list)
                                 data.forEach(function(d){
                                     var temp = d[col_name_x].split("-")
                                     d[col_name_x_new] = parseInt(temp[0])
                                     d[col_name_y_new] = parseInt(d[col_name_y]) / parseInt(d[col_name_y_denominator]);
+                                    town_ = d[col_name_group]
+                                    year_ = parseInt(temp[0])
+                                    // console.log(town_)
+                                    // console.log(year_)
+                                    avg_data_list[town_][year_].push(d[col_name_y_new])
                                 })
-                                const list_x = d3.set(data, function(d) {return d['month']}).values().sort((a, b) => a - b);
-                                console.log(list_x)
+                                // console.log(avg_data_list)
+                                
+                                for(var town_ in avg_data_list){
+                                    avg_data_town = avg_data_list[town_]
+                                    for (var year_ in avg_data_town){
+                                        price_list = avg_data_town[year_]
+                                        var total = 0
+                                        if (price_list.length > 0){
+                                            for (var ii = 0; ii < price_list.length; ii++){
+                                                total += price_list[ii]
+                                            }
+                                            avg_data[town_][year_] = total / price_list.length
+                                        }
+                                    }
 
-                                var x = d3.scaleLinear()
+                                }
+                                var avg_data_ = {}
+                                for (var i = 0; i < list_group.length; i++){
+                                    town_ = list_group[i]
+                                    avg_data_[town_] = []
+                                    for (var j = 1990; j < 2024; j++){
+                                        avg_data_[town_].push([j,avg_data[town_][j]])
+                                    }
+                                    // console.log(avg_data_[town_])
+                                }
+
+                                var avg_data_x = {}
+                                for (var i = 0; i < list_group.length; i++){
+                                    town_ = list_group[i]
+                                    avg_data_x[town_] = []
+                                    for (var j = 1990; j < 2024; j++){
+                                        avg_data_x[town_].push(avg_data[town_][j])
+                                    }
+                                    // console.log(avg_data_[town_])
+                                }
+                                var years = []
+                                for (var j = 1990; j < 2024; j++){
+                                    years.push(j)
+                                }
+                                // console.log(avg_data_)
+
+                                const list_x = d3.set(data, function(d) {return d['month']}).values().sort((a, b) => a - b);
+                                // console.log(list_x)
+
+                                var xx = d3.scaleLinear()
                                     .domain([d3.min(data, function(d) { 
                                                 return d[col_name_x_new]; 
                                                 }) - 5,
@@ -139,13 +218,13 @@
 
                                 svg.append("g")
                                     .attr("transform", "translate(0," + height + ")")
-                                    .call(d3.axisBottom(x).tickSizeOuter(0)
+                                    .call(d3.axisBottom(xx).tickSizeOuter(0)
                                     // .tickFormat(d => parseInt(d/12) + "Y" + d%12 + "M")
                                     );
                                     
 
                                 // Add Y axis
-                                var y = d3.scaleLinear()
+                                var yy = d3.scaleLinear()
                                     .domain([d3.min(data, function(d) { 
                                                 return d[col_name_y_new]; 
                                                 }) / 100 * 90, // Else start from 0
@@ -156,7 +235,7 @@
                                     .range([ height, 0]);
 
                                 svg.append("g")
-                                    .call(d3.axisLeft(y).tickSizeOuter(0))
+                                    .call(d3.axisLeft(yy).tickSizeOuter(0))
 
                                 // Add X axis label:
                                 svg.append("text")
@@ -235,8 +314,8 @@
                                     .enter()
                                     .append("circle")
                                         .attr("class", function (d) { return "dot " + d[col_name_group] } )
-                                        .attr("cx", function (d) { return x(d[col_name_x_new]); } )
-                                        .attr("cy", function (d) { return y(d[col_name_y_new]); } )
+                                        .attr("cx", function (d) { return xx(d[col_name_x_new]); } )
+                                        .attr("cy", function (d) { return yy(d[col_name_y_new]); } )
                                         .attr("r", dot_size)
                                     .style("fill", function (d) { return color(d[col_name_group]) } )
                                     .style("opacity", opacity)
@@ -244,6 +323,54 @@
                                     .on("mousemove", mousemove)
                                     .on("mouseleave", mouseleave)
 
+                                // var line_ = d3.line()
+                                // .x([1990, 2000, 2010, 2020])
+                                // .y([1000, 2000, 3000, 4000])
+                                // .curve(d3.curveMonotoneX)
+
+                                // svg.append("path")
+                                // .datum([[1990,1000],[2000,2000],[2010,3000],[2020,4000]])
+                                // .attr("class", "line") 
+                                // .attr("transform", "translate(" + 100 + "," + 100 + ")")
+                                // .attr("d", line_)
+                                // .style("fill", "none")
+                                // .style("stroke", "#CC0000")
+                                // .style("stroke-width", "2");    
+                                
+                                // var lineFunction = d3.svg.line()
+                                // .x(function(d) { return d[0]; })
+                                // .y(function(d) { return d[1]; })
+                                // .interpolate('linear');
+
+                                // console.log(121)
+                                // for (var i = 0; i < list_group.length; i++){
+                                //     // town_ = list_group[i]
+                                //     // console.log(years)
+                                //     // console.log(avg_data_[town_])
+                                //     // var line = d3.line()
+                                //     // .x(years) 
+                                //     // .y(avg_data_x[town_]) 
+                                //     // .curve(d3.curveMonotoneX)
+                                    
+                                //     // svg.append("path")
+                                //     // .datum(avg_data_) 
+                                //     // .attr("class", "line") 
+                                //     // // .attr("transform", "translate(" + 100 + "," + 100 + ")")
+                                //     // .attr("d", lineFunction(avg_data_))
+                                //     // .style("fill", "none")
+                                //     // .style("stroke", color(town_))
+                                //     // .style("stroke-width", "2");
+                                //     var lineGraph = svg.append("path")
+                                //     .attr("d", d3.svg.line()
+                                //     .x(function(d) { return d[0]; })
+                                //     .y(function(d) { return d[1]; })
+                                //     .interpolate('linear')(avg_data_[town_]))
+                                //     .attr("stroke", "blue")
+                                //     .attr("stroke-width", 2)
+                                //     .attr("fill", "none");
+                                // }
+                                
+                                
 
                                 // Add one dot in the legend for each name
                                 svg.selectAll("legend_dots")
